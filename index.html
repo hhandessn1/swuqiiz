@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="index, follow">
+
+<title>Messenger</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+display:flex;
+height:100vh;
+}
+
+.sidebar{
+width:300px;
+background:#17212b;
+color:white;
+padding:10px;
+overflow-y:auto;
+}
+
+.chat{
+flex:1;
+display:flex;
+flex-direction:column;
+background:#0e1621;
+color:white;
+}
+
+.messages{
+flex:1;
+padding:20px;
+overflow-y:auto;
+}
+
+.message{
+background:#2b5278;
+padding:8px;
+margin-bottom:8px;
+border-radius:8px;
+}
+
+.input{
+display:flex;
+padding:10px;
+background:#17212b;
+}
+
+.input input{
+flex:1;
+padding:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h3>Users</h3>
+
+<input id="search" placeholder="Search">
+
+<div id="users"></div>
+
+</div>
+
+<div class="chat-header">
+
+<button onclick="backToChats()">←</button>
+
+<span id="chatName"></span>
+
+</div>
+
+<div class="chat">
+
+<div id="messages" class="messages"></div>
+
+<div class="input">
+
+<input id="msg">
+
+<button onclick="send()">Send</button>
+
+</div>
+
+</div>
+
+<div class="profile">
+
+<img id="avatar" width="80">
+
+<input type="file" id="avatarInput">
+
+<button onclick="uploadAvatar()">Upload avatar</button>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+const socket=io()
+
+let currentUser=""
+let currentChat=""
+
+function login(){
+
+currentUser=prompt("Enter username")
+
+socket.emit("login",currentUser)
+
+loadUsers()
+
+}
+
+async function loadUsers(){
+
+const res=await fetch("/users")
+
+const users=await res.json()
+
+const usersDiv=document.getElementById("users")
+
+usersDiv.innerHTML=""
+
+users.forEach(u=>{
+
+const div=document.createElement("div")
+
+div.textContent=u.username
+
+div.onclick=()=>{
+
+currentChat=u.username
+
+}
+
+usersDiv.appendChild(div)
+
+})
+
+}
+
+function send(){
+
+const text=document.getElementById("msg").value
+
+socket.emit("privateMessage",{
+
+from:currentUser,
+
+to:currentChat,
+
+text
+
+})
+
+}
+
+socket.on("privateMessage",(data)=>{
+
+const div=document.createElement("div")
+
+div.className="message"
+
+div.textContent=data.from+": "+data.text
+
+document.getElementById("messages").appendChild(div)
+
+})
+
+login()
+
+</script>
+
+</body>
+
+</html>
